@@ -216,12 +216,12 @@ class UserData:
 
             scales_data = data['scales']
             scales = AvatarScales(
-                height=scales.get('height', None),
-                width=scales.get('width', None),
-                head=scales.get('head', None),
-                depth=scales.get('depth', None),
-                proportion=scales.get('proportion', None),
-                bodyType=scales.get('bodyType', None)
+                height=scales_data.get('height', None),
+                width=scales_data.get('width', None),
+                head=scales_data.get('head', None),
+                depth=scales_data.get('depth', None),
+                proportion=scales_data.get('proportion', None),
+                bodyType=scales_data.get('bodyType', None)
             )
 
             bodyColors_data = data['bodyColors']
