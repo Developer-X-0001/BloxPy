@@ -17,7 +17,7 @@ BloxPy is the ultimate Python API wrapper for Roblox developers, offering an all
 You can install BloxPy using pip:
 
 ```bash
-pip install BloxPy
+pip install -U BloxPy
 ```
 
 ## Usage
