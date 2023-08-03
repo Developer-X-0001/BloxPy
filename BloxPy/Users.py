@@ -242,14 +242,14 @@ class UserData:
                         id=item.get('id', None),
                         name=item.get('name', None),
                         assetType=AvatarAssetType(
-                            id=item['assetType'].get('id', None),
-                            name=item['assetType'].get('name', None)
+                            id=item.get('assetType', {}).get('id', None),
+                            name=item.get('assetType', {}).get('name', None)
                         ),
                         currentVersionId=item.get('currentVersionId', None),
                         meta=AvatarAssetsMeta(
-                            order=item['meta'].get('order', None),
-                            puffiness=item['meta'].get('puffiness', None),
-                            version=item['meta'].get('version', None)
+                            order=item.get('meta', {}).get('order', None),
+                            puffiness=item.get('meta', {}).get('puffiness', None),
+                            version=item.get('meta', {}).get('version', None)
                         )
                     )
                     for item in assets_data
