@@ -715,6 +715,3 @@ def get_user(user_id: int) -> UserData:
             name=user_data.get('name', None),
             displayName=user_data.get('displayName', None)
         )
-
-
-print(get_user(123).avatar())
