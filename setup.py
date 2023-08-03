@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 
 NAME = 'BloxPy'
-VERSION = '0.1.14a'
+VERSION = '0.1.15'
 DESCRIPTION = 'BloxPy: Your All-in-One Python API wrapper for Roblox Development'
 LONG_DESCRIPTION = 'BloxPy is the ultimate Python API wrapper for Roblox developers, offering an all-in-one solution to interact with Roblox Public APIs effortlessly. Whether you want to retrieve player data, manage groups, or create dynamic game interactions, BloxPy empowers you to build amazing Roblox experiences with ease.'
 AUTHOR = 'Developer X'
