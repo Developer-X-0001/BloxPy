@@ -11,6 +11,92 @@ from _exceptions import (
 )
 
 @dataclass
+class AvatarScales:
+    height: int
+    width: int
+    head: int
+    depth: int
+    proportion: int
+    bodyType: int
+
+@dataclass
+class AvatarBodyColors:
+    headColorId: int
+    torsoColorId: int
+    rightArmColorId: int
+    leftArmColorId: int
+    rightLegColorId: int
+    leftLegColorId: int
+
+@dataclass
+class AvatarAssetType:
+    id: int
+    name: str
+
+@dataclass
+class AvatarAssetsMeta:
+    order: int
+    puffiness: int
+    version: int
+
+@dataclass
+class AvatarAssets:
+    id: int
+    name: str
+    assetType: AvatarAssetType
+    currentVersionId: int
+    meta: AvatarAssetsMeta
+
+@dataclass
+class AvatarEmotes:
+    assetId: int
+    assetName: str
+    position: int
+
+@dataclass
+class AvatarData:
+    scales: AvatarScales
+    playerAvatarType: int
+    bodyColors: AvatarBodyColors
+    assets: List[AvatarAssets]
+    defaultShirtApplied: bool
+    defaultPantApplied: bool
+    emotes: List[AvatarEmotes]
+
+@dataclass
+class BadgeStatistics:
+    pastDayAwardedCount: int
+    awardedCount: int
+    winRatePercentage: int
+
+@dataclass
+class BadgeAwardingUniverse:
+    id: int
+    name: str
+    rootPlaceId: int
+
+@dataclass
+class BadgeData:
+    id: int
+    name: str
+    description: str
+    displayName: str
+    displayDescription: str
+    enabled: bool
+    iconImageId: int
+    displayIconImageId: int
+    created: str
+    updated: str
+    statistics: BadgeStatistics
+    awardingUniverse: BadgeAwardingUniverse
+
+@dataclass
+class BadgesResultData:
+    previousPageCursor: str
+    nextPageCursor: str
+    data: List[BadgeData]
+
+@dataclass
 class FollowerData:
     isOnline: bool
     presenceType: int
@@ -110,6 +196,162 @@ class UserData:
     name: str
     displayName: str
 
+    def avatar(self) -> AvatarData:
+        response = requests.get(f'https://avatar.roblox.com/v1/users/{self.id}/avatar')
+
+        if response.status_code == 404:
+            raise RobloxNotFoundError("User not found.")
+        elif response.status_code == 400:
+            raise RobloxBadRequestError("Bad request.")
+        elif response.status_code == 401:
+            raise RobloxUnauthorizedError("Unauthorized. Authentication required.")
+        elif response.status_code == 429:
+            raise RobloxRateLimitError("Rate limit exceeded. Please try again later.")
+        elif response.status_code == 500:
+            raise RobloxInternalServerError("Internal server error.")
+        elif response.status_code != 200:
+            raise RobloxUnexpectedError(f"Unexpected HTTP status code: {response.status_code}")
+        else:
+            data = response.json()
+
+            scales_data = data['scales']
+            scales = AvatarScales(
+                height=scales.get('height', None),
+                width=scales.get('width', None),
+                head=scales.get('head', None),
+                depth=scales.get('depth', None),
+                proportion=scales.get('proportion', None),
+                bodyType=scales.get('bodyType', None)
+            )
+
+            bodyColors_data = data['bodyColors']
+            bodyColors = AvatarBodyColors(
+                headColorId=bodyColors_data.get('headColorId', None),
+                torsoColorId=bodyColors_data.get('torsoColorId', None),
+                rightArmColorId=bodyColors_data.get('rightArmColorId', None),
+                leftArmColorId=bodyColors_data.get('leftArmColorId', None),
+                rightLegColorId=bodyColors_data.get('rightLegColorId', None),
+                leftLegColorId=bodyColors_data.get('leftLegColorId', None)
+            )
+
+            assets_data = data['assets']
+            assets = None
+            if assets_data:
+                assets = [
+                    AvatarAssets(
+                        id=item.get('id', None),
+                        name=item.get('name', None),
+                        assetType=AvatarAssetType(
+                            id=item['assetType'].get('id', None),
+                            name=item['assetType'].get('name', None)
+                        ),
+                        currentVersionId=item.get('currentVersionId', None),
+                        meta=AvatarAssetsMeta(
+                            order=item['meta'].get('order', None),
+                            puffiness=item['meta'].get('puffiness', None),
+                            version=item['meta'].get('version', None)
+                        )
+                    )
+                    for item in assets_data
+                ]
+            
+            emotes_data = data['emotes']
+            emotes = None
+            if emotes_data:
+                emotes = [
+                    AvatarEmotes(
+                        assetId=item.get('assetId', None),
+                        assetName=item.get('assetName', None),
+                        position=item.get('position', None)
+                    )
+                    for item in emotes_data
+                ]
+            
+            return AvatarData(
+                scales=scales,
+                playerAvatarType=data.get('playerAvatarType', None),
+                bodyColors=bodyColors,
+                assets=assets,
+                defaultShirtApplied=data.get('defaultShirtApplied', None),
+                defaultPantApplied=data.get('defaultPantApplied', None),
+                emotes=emotes
+            )
+
+    def badges(self, limit: Optional[int] = None, cursor: Optional[str] = None, sortOrder: Optional[str] = None) -> BadgesResultData:
+        base_url = f'https://badges.roblox.com/v1/users/{self.id}/badges'
+
+        if limit:
+            limits = [10, 25, 50, 100]
+            if limit not in limits:
+                raise RobloxBadRequestError('Limit can only be 10, 25, 50 or 100')
+            
+            else:
+                base_url += f"&limit={limit}"
+        
+        if sortOrder:
+            Orders = ['Asc', 'Desc']
+            if sortOrder not in Orders:
+                raise RobloxBadRequestError('Sort order can only be either \'Asc\' or \'Desc\'')
+            
+            else:
+                base_url += f"&sortOrder={sortOrder}"
+
+        if cursor:
+            base_url += f"&cursor={cursor}"
+        
+        response = requests.get(base_url, headers={'accept': 'application/json'})
+    
+        if response.status_code == 400:
+            error_message = (response.json()['errors'][0]['message'])
+            raise RobloxBadRequestError(error_message)
+        
+        if response.status_code == 429:
+            raise RobloxRateLimitError('Too many requests.')
+
+        if response.status_code == 200:
+            search_data = response.json()
+
+            statistics_data = search_data['data']['statistics']
+            statistics = None
+            if statistics_data:
+                statistics = BadgeStatistics(
+                    pastDayAwardedCount=search_data['data']['statistics']['pastDayAwardedCount'],
+                    awardedCount=search_data['data']['statistics']['awardedCount'],
+                    winRatePercentage=search_data['data']['statistics']['winRatePercentage']
+                )
+            
+            awardingUniverse_data = search_data['data']['awardingUniverse']
+            awardingUniverse = None
+            if awardingUniverse_data:
+                awardingUniverse = BadgeAwardingUniverse(
+                    id=search_data['data']['awardingUniverse']['id'],
+                    name=search_data['data']['awardingUniverse']['name'],
+                    rootPlaceId=search_data['data']['awardingUniverse']['rootPlaceId']
+                )
+
+            badges_search_results = BadgesResultData(
+                previousPageCursor=search_data.get('previousPageCursor', None),
+                nextPageCursor=search_data.get('nextPageCursor', None),
+                data=[
+                    BadgeData(
+                        id=search_data.get('id', None),
+                        name=search_data.get('name', None),
+                        description=search_data.get('description', None),
+                        displayName=search_data.get('displayName', None),
+                        displayDescription=search_data.get('displayDescription', None),
+                        enabled=search_data.get('enabled', None),
+                        iconImageId=search_data.get('iconImageId', None),
+                        displayIconImageId=search_data.get('displayIconImageId', None),
+                        created=search_data.get('created', None),
+                        updated=search_data.get('updated', None),
+                        statistics=statistics,
+                        awardingUniverse=awardingUniverse
+                    )
+                    for item in search_data['data']
+                ]
+            )
+            return badges_search_results
+        
     def followers(self, limit: Optional[int] = None, cursor: Optional[str] = None, sortOrder: Optional[str] = None) -> FollowersResultData:
         """
         Fetches a list of followers for the user represented by the current instance.
@@ -473,3 +715,6 @@ def get_user(user_id: int) -> UserData:
             name=user_data.get('name', None),
             displayName=user_data.get('displayName', None)
         )
+
+
+print(get_user(123).avatar())
