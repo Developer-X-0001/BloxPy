@@ -55,7 +55,7 @@ def search_users(keyword: str, limit: Optional[int] = None, cursor: Optional[str
     if limit:
         limits = [10, 25, 50, 100]
         if limit not in limits:
-            raise RobloxBadRequestError('Limit can only be 10, 25, 50, or 100')
+            raise RobloxBadRequestError('Limit can only be 10, 25, 50 or 100')
         
         else:
             base_url += f"&limit={limit}"
